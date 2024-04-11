@@ -1,0 +1,16 @@
+import re
+f = open("D:/word.txt","r",encoding="UTF-8")
+fr = f.read()
+f.close()
+punctuation = ['，','。','？','！','：','；','—-','（','）','【','】','{','}','‘','’','“','”']
+new_f = fr
+for char in punctuation:
+    new_f = re.sub(r'[，。？！：；—-（）【】{}\‘\’“”\n ]', ' ', fr)
+words = new_f.split(' ')
+my_dict = dict()
+for word in words:
+    if word in my_dict:
+        my_dict[word] += 1
+    else:
+        my_dict[word] = 1
+print(my_dict)
