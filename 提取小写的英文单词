@@ -1,0 +1,14 @@
+#去除文本中的中文，提取英文
+#定义一个用于判断小写字母单词
+def is_lower_word(word):
+    return word.isalpha() and word.islower()
+f = open("F:/word.txt","r",encoding="UTF-8")
+fr = f.read()
+f.close()
+fr = fr.strip() #去首尾空白字符
+new_f = fr.split(' ')
+new_words = [word for word in new_f if is_lower_word(word)]
+#输出到一个新的文本文件里面
+new_text = open("F:/new_text.txt","w",encoding="UTF-8")
+for word in new_words:
+    new_text.write(word + ' ')
