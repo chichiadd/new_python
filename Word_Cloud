@@ -1,0 +1,105 @@
+import re
+import requests
+from bs4 import BeautifulSoup
+import jieba
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import os
+import glob
+
+headers = {"User-Agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"}
+my_dict = {}
+
+def get_url(url):
+# 获取小说每章的超链接
+    response = requests.get(url=url,headers=headers)
+    html = response.text
+    soup = BeautifulSoup(html, "html.parser")
+    all_chapter = soup.find_all("li", attrs={"class": "col-4"})
+    for chapter in all_chapter:
+        a_tag = chapter.find('a')  # 查找<li>标签下的<a>标签
+        chapter_url = a_tag['href']  # 获取<a>标签的href属性值
+        get_text(chapter_url)
+
+def next_page(url):
+# 在小说的每章中翻页
+    response = requests.get(url=url, headers=headers)
+    html = response.text
+    soup = BeautifulSoup(html, "html.parser")
+    # 直接找到包含“下一页”的<p>标签
+    page_info = soup.find("p", attrs={"class": "mlfy_page"})
+    # 在<p>标签中找到为“下一页”的<a>标签
+    next_link = page_info.find('a', string="下一页")
+    if next_link and next_link.has_attr('href'):
+        next_page_url = next_link['href']
+        return next_page_url
+
+def get_text(url):
+# 获取小说中的文本
+    response = requests.get(url=url,headers=headers)
+    html = response.text
+    soup = BeautifulSoup(html, "html.parser")
+    name = soup.find("div", attrs={"id": "mlfy_main_text"}).find("h1").text
+    all_text = soup.find_all("div", attrs={"id":"TextContent"})
+    for text in all_text:
+        text_string = text.getText()
+        write_text(name,text_string)
+    next_url = next_page(url)
+    if next_url != None:
+        get_text(next_url)
+
+def clean_filename(filename):
+# 替换掉Windows文件名中不允许的字符
+    invalid_chars = ['\\', '/', ':', '*', '?', '"', '<', '>', '|']
+    for char in invalid_chars:
+        filename = filename.replace(char, '')
+    return filename
+
+def write_text(name, text_string):
+# 用于把文本写进txt文件，并以每章的标题进行命名
+    clean_name = clean_filename(name)  # 清理文件名
+    path = f"D:/ShieldHero/{clean_name}.txt"
+    with open(path, "a+", encoding="UTF-8") as f:
+        f.write(text_string)
+
+
+
+def count_words(fr):
+    punctuation = ['，', '。', '？', '！', '：', '；', '—-', '（', '）', '【', '】', '{', '}', '‘', '’', '“', '”', ' ', ',']
+    for char in punctuation:
+        fr = re.sub(char, ' ', fr)
+    words = jieba.cut(' '.join(fr.split(' ')))
+    for word in words:
+        if len(word) == 1:  # 单个词语不计算在内
+            continue
+        elif word in my_dict:
+            my_dict[word] += 1
+        else:
+            my_dict[word] = 1
+
+def get_wordcloud():
+    font_path = 'simhei.ttf'  # 这里以黑体为例，需要根据实际情况指定路径
+    # 创建词云对象，设置参数
+    wordcloud = WordCloud(font_path=font_path, background_color='white', width=800, height=600)
+    # 生成词云
+    wordcloud.generate_from_frequencies(my_dict)
+    # 使用 matplotlib 展示生成的词云图
+    plt.figure(figsize=(10, 8))  # 设置图像大小
+    plt.imshow(wordcloud,
+               interpolation='bilinear')  # 显示词云图，'bilinear' interpolation makes the displayed image appear more smoothly
+    plt.axis('off')  # 不显示坐标轴
+    plt.show()  # 展示图片
+
+def read_txt_files(folder_path):
+    path_pattern = os.path.join(folder_path, '*.txt')     # 构建路径模式来匹配所有的txt文件
+    txt_files = glob.glob(path_pattern)                   # 使用glob.glob获取匹配的文件路径列表
+    for file_path in txt_files:                           # 打开并读取每个txt文件
+        with open(file_path, 'r', encoding='utf-8') as file:
+            fr = file.read()
+        count_words(fr)
+
+
+get_url("https://www.wenkuchina.com/lightnovel/1111/catalog")  # 获取小说资源
+folder_path = r'D:\ShieldHero'      # 输入文件夹路径
+read_txt_files(folder_path)
+get_wordcloud()
