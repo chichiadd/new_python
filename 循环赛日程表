@@ -1,0 +1,2 @@
+n = input("请输入人数：")
+arr = list[n][n] = 0
