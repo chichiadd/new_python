@@ -1,2 +1,26 @@
-n = input("请输入人数：")
-arr = list[n][n] = 0
+while True:
+    n = input("请输入人数：")
+    n = int(n)
+    if n == 0 or (n & (n - 1)) != 0:
+        print("数字应该是2的幂，请重新输入")
+        continue
+    break
+arr = [[0]*n for _ in range(n)]
+def table(arr,col,len):
+    if(len == 1):
+        arr[0][col] = col + 1
+        return
+    elif(len > 1):
+        half = len // 2
+        table(arr, col, half)
+        table(arr, col + half, half)
+        for i in range(half):
+            for j in range(half):
+                arr[half + i][col + j] = arr[i][col + j] + half
+                arr[i][col + j + half] = arr[i][col + j] + half
+                arr[half + i][col + j + half] = arr[i][col + j]
+table(arr,0,n)
+for i in range(n):
+    for j in range(n):
+        print("%2d"%(arr[i][j]),end=" ")
+    print(" ")
