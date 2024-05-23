@@ -1,0 +1,122 @@
+import tkinter as tk
+import mysql.connector
+from tkinter import messagebox, ttk
+
+# 创建数据库连接
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="123123qwe",  # 请注意保护个人隐私和安全
+    database="student"
+)
+
+# 创建学生表
+cursor = db.cursor()
+
+# 创建Tkinter应用程序窗口
+app = tk.Tk()
+app.title("学生管理系统")
+
+# 设置一个容器frame用于放置表格
+frame_table = tk.Frame(app)
+frame_table.grid(row=0, column=0, padx=10, pady=10)
+
+# 设置另一个容器frame用于放置输入框和操作按钮
+frame_input_buttons = tk.Frame(app)
+frame_input_buttons.grid(row=0, column=1, sticky='n')
+
+# 创建Tkinter表格视图
+columns = ("id", "name", "gender", "department", "phone_number", "birth_date")
+tree = ttk.Treeview(frame_table, columns=columns, show="headings")
+for col in columns:
+    tree.heading(col, text=col)
+tree.pack()
+
+# 创建标签和输入框
+tk.Label(frame_input_buttons, text="学生ID:").grid(row=0, column=0, padx=5, pady=2)
+id_entry = tk.Entry(frame_input_buttons)
+id_entry.grid(row=0, column=1, padx=5, pady=2)
+
+tk.Label(frame_input_buttons, text="姓名:").grid(row=1, column=0, padx=5, pady=2)
+name_entry = tk.Entry(frame_input_buttons)
+name_entry.grid(row=1, column=1, padx=5, pady=2)
+
+tk.Label(frame_input_buttons, text="性别:").grid(row=2, column=0, padx=5, pady=2)
+gender_entry = tk.Entry(frame_input_buttons)
+gender_entry.grid(row=2, column=1, padx=5, pady=2)
+
+tk.Label(frame_input_buttons, text="院系:").grid(row=3, column=0, padx=5, pady=2)
+department_entry = tk.Entry(frame_input_buttons)
+department_entry.grid(row=3, column=1, padx=5, pady=2)
+
+tk.Label(frame_input_buttons, text="电话号码:").grid(row=4, column=0, padx=5, pady=2)
+phone_number_entry = tk.Entry(frame_input_buttons)
+phone_number_entry.grid(row=4, column=1, padx=5, pady=2)
+
+tk.Label(frame_input_buttons, text="出生日期:").grid(row=5, column=0, padx=5, pady=2)
+birth_date_entry = tk.Entry(frame_input_buttons)
+birth_date_entry.grid(row=5, column=1, padx=5, pady=2)
+
+# 定义函数来查询和显示学生信息
+def show_students():
+    tree.delete(*tree.get_children())
+    cursor.execute("SELECT * FROM student")
+    students = cursor.fetchall()
+    for student in students:
+        tree.insert('', 'end', values=student)
+
+# 定义函数来添加学生信息
+def add_student():
+    try:
+        name = name_entry.get()
+        gender = gender_entry.get()
+        department = department_entry.get()
+        phone_number = phone_number_entry.get()
+        birth_date = birth_date_entry.get()
+        sql = "INSERT INTO student (name, gender, department, phone_number, birth_date) VALUES (%s, %s, %s, %s, %s)"
+        values = (name, gender, department, phone_number, birth_date)
+        cursor.execute(sql, values)
+        db.commit()
+        show_students()  # 刷新学生显示列表
+        messagebox.showinfo("成功", "学生信息添加成功")
+    except mysql.connector.Error as err:
+        messagebox.showerror("错误", f"学生信息添加失败: {str(err)}")
+
+# 定义函数来删除学生信息
+def delete_student():
+    try:
+        id = id_entry.get()
+        sql = "DELETE FROM student WHERE id = %s"
+        values = (id,)
+        cursor.execute(sql, values)
+        db.commit()
+        show_students()  # 刷新学生显示列表
+        messagebox.showinfo("成功", "已成功删除学生")
+    except mysql.connector.Error as err:
+        messagebox.showerror("错误", f"删除学生失败: {str(err)}")
+
+# 定义函数来更新学生信息
+def update_student():
+    try:
+        id = id_entry.get()
+        name = name_entry.get()
+        gender = gender_entry.get()
+        department = department_entry.get()
+        phone_number = phone_number_entry.get()
+        birth_date = birth_date_entry.get()
+        sql = "UPDATE student SET name = %s, gender = %s, department = %s, phone_number = %s, birth_date = %s WHERE id = %s"
+        values = (name, gender, department, phone_number, birth_date, id)
+        cursor.execute(sql, values)
+        db.commit()
+        show_students()  # 刷新学生显示列表
+        messagebox.showinfo("成功", "学生信息更新成功")
+    except mysql.connector.Error as err:
+        messagebox.showerror("错误", f"学生信息更新失败: {str(err)}")
+
+# 创建按钮并将它们放到界面中适当的位置
+tk.Button(frame_input_buttons, text="显示所有学生", command=show_students).grid(row=6, column=0, columnspan=2, pady=10)
+tk.Button(frame_input_buttons, text="添加学生", command=add_student).grid(row=7, column=0, columnspan=2, pady=2)
+tk.Button(frame_input_buttons, text="删除学生", command=delete_student).grid(row=8, column=0, columnspan=2, pady=2)
+tk.Button(frame_input_buttons, text="更新学生", command=update_student).grid(row=9, column=0, columnspan=2, pady=10)
+
+app.mainloop()
