@@ -1,0 +1,35 @@
+import numpy as np
+
+def matrix_chain_order(p):
+    n = len(p) - 1
+    m = np.zeros((n, n))
+    s = np.zeros((n, n))
+
+    for l in range(2, n + 1):
+        for i in range(0, n - l + 1):
+            j = i + l - 1
+            m[i, j] = np.inf
+            for k in range(i, j):
+                q = m[i, k] + m[k + 1, j] + p[i] * p[k + 1] * p[j + 1]
+                if q < m[i, j]:
+                    m[i, j] = q
+                    s[i, j] = k
+
+    return m, s
+
+def print_optimal_parens(s, i, j):
+    if i == j:
+        print(f'M{i+1}', end='')
+    else:
+        print('(', end='')
+        print_optimal_parens(s, i, int(s[i, j]))
+        print_optimal_parens(s, int(s[i, j] + 1), j)
+        print(')', end='')
+
+p = [10, 30, 70, 1, 200]
+m, s = matrix_chain_order(p)
+
+print("最少的乘法次数为: ", int(m[0, len(p) - 2]))  # 转型为整数
+
+print("最优括号化方案为: ", end='')
+print_optimal_parens(s, 0, len(p) - 2)
